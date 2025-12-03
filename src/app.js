@@ -41,7 +41,7 @@ const YAML = require('yaml');
 const path = require('path');
 
 // Swagger
-const swaggerPath = path.join(__dirname, '../swagger.yaml');
+const swaggerPath = path.join(__dirname, 'swagger.yaml');
 
 // Đọc YAML
 const file = fs.readFileSync(swaggerPath, 'utf8');
