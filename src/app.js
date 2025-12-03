@@ -40,7 +40,7 @@ const fs = require('fs');
 const YAML = require('yaml');
 const path = require('path');
 
-// Swagger nằm ngay trong thư mục backend
+// Swagger
 const swaggerPath = path.join(__dirname, '../swagger.yaml');
 
 // Đọc YAML
