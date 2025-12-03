@@ -1,0 +1,312 @@
+openapi: 3.0.0
+info:
+  title: Cinema API
+  version: 1.0.0
+  description: REST API for cinema booking project
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        fullName:
+          type: string
+          example: "Nguyen Van A"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        role:
+          type: string
+          example: "USER"
+
+    Movie:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: "Avengers: Endgame"
+        description:
+          type: string
+        durationMinutes:
+          type: integer
+          example: 180
+        releaseDate:
+          type: string
+          format: date
+          example: "2025-01-01"
+        ageRating:
+          type: string
+          example: "13+"
+        posterUrl:
+          type: string
+          example: "https://example.com/poster.jpg"
+        trailerUrl:
+          type: string
+          example: "https://youtube.com/..."
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Đăng ký tài khoản mới
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fullName
+                - email
+                - password
+              properties:
+                fullName:
+                  type: string
+                  example: "Nguyen Van A"
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+                password:
+                  type: string
+                  format: password
+                  example: "123456"
+      responses:
+        "201":
+          description: Tạo tài khoản thành công
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Thiếu thông tin bắt buộc
+        "409":
+          description: Email đã tồn tại
+        "500":
+          description: Lỗi server
+
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Đăng nhập và nhận JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+                password:
+                  type: string
+                  format: password
+                  example: "123456"
+      responses:
+        "200":
+          description: Đăng nhập thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  user:
+                    $ref: "#/components/schemas/User"
+        "400":
+          description: Thiếu email hoặc password
+        "401":
+          description: Sai email hoặc password
+        "500":
+          description: Lỗi server
+
+  /auth/me:
+    get:
+      tags:
+        - Auth
+      summary: Lấy thông tin user hiện tại
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Thông tin user hiện tại
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+        "401":
+          description: Thiếu hoặc token không hợp lệ
+
+  /movies:
+    get:
+      tags:
+        - Movies
+      summary: Lấy danh sách phim (có tìm kiếm)
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          description: Từ khóa tìm kiếm theo tên phim
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+      responses:
+        "200":
+          description: Danh sách phim
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Movie"
+
+    post:
+      tags:
+        - Movies
+      summary: Tạo phim mới (ADMIN)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - durationMinutes
+              properties:
+                title:
+                  type: string
+                  example: "Avengers: Endgame"
+                description:
+                  type: string
+                durationMinutes:
+                  type: integer
+                  example: 180
+                releaseDate:
+                  type: string
+                  format: date
+                  example: "2025-01-01"
+                ageRating:
+                  type: string
+                  example: "13+"
+                posterUrl:
+                  type: string
+                trailerUrl:
+                  type: string
+      responses:
+        "201":
+          description: Tạo phim thành công
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Movie"
+        "400":
+          description: Thiếu title hoặc durationMinutes
+        "401":
+          description: Chưa đăng nhập
+        "403":
+          description: Không phải admin
+
+  /movies/{id}:
+    get:
+      tags:
+        - Movies
+      summary: Lấy thông tin chi tiết phim
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Thông tin phim
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Movie"
+        "404":
+          description: Không tìm thấy phim
+
+    put:
+      tags:
+        - Movies
+      summary: Cập nhật phim (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Movie"
+      responses:
+        "200":
+          description: Cập nhật thành công
+        "401":
+          description: Chưa đăng nhập
+        "403":
+          description: Không phải admin
+        "404":
+          description: Không tìm thấy phim
+
+    delete:
+      tags:
+        - Movies
+      summary: Xoá phim (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Xoá thành công
+        "401":
+          description: Chưa đăng nhập
+        "403":
+          description: Không phải admin
+        "404":
+          description: Không tìm thấy phim
