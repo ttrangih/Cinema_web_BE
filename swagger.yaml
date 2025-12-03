@@ -5,8 +5,8 @@ info:
   description: REST API for cinema booking project
 
 servers:
-  - url: http://localhost:3000/api
-    description: Local development
+  - url: /api
+    description: Local development + render
 
 components:
   securitySchemes:
