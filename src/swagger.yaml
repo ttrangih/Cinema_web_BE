@@ -32,6 +32,48 @@ components:
         role:
           type: string
           example: "USER"
+    SeatWithStatus:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 15
+        roomId:
+          type: integer
+          example: 3
+        row:
+          type: string
+          example: "A"
+        number:
+          type: integer
+          example: 7
+        type:
+          type: string
+          example: "NORMAL"
+        isActive:
+          type: boolean
+          example: true
+        isReserved:
+          type: boolean
+          example: false
+        price:
+          type: number
+          example: 80000
+
+    Booking:
+      type: object
+      properties:
+        bookingId:
+          type: integer
+          example: 12
+        showtimeId:
+          type: integer
+          example: 5
+        seatIds:
+          type: array
+          items:
+            type: integer
+          example: [15, 16, 17]
 
     Movie:
       type: object
@@ -166,79 +208,95 @@ paths:
           description: Thiếu hoặc token không hợp lệ
 
   /movies:
-    get:
-      tags:
-        - Movies
-      summary: Lấy danh sách phim (có tìm kiếm)
-      parameters:
-        - in: query
-          name: q
-          schema:
-            type: string
-          description: Từ khóa tìm kiếm theo tên phim
-        - in: query
-          name: page
-          schema:
-            type: integer
-            default: 1
-      responses:
-        "200":
-          description: Danh sách phim
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Movie"
-
-    post:
-      tags:
-        - Movies
-      summary: Tạo phim mới (ADMIN)
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
+  get:
+    tags:
+      - Movies
+    summary: Lấy danh sách phim (có tìm kiếm)
+    parameters:
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: Từ khóa tìm kiếm theo tên phim
+      - in: query
+        name: page
+        schema:
+          type: integer
+          default: 1
+    responses:
+      "200":
+        description: Danh sách phim kèm phân trang
         content:
           application/json:
             schema:
               type: object
-              required:
-                - title
-                - durationMinutes
               properties:
-                title:
-                  type: string
-                  example: "Avengers: Endgame"
-                description:
-                  type: string
-                durationMinutes:
-                  type: integer
-                  example: 180
-                releaseDate:
-                  type: string
-                  format: date
-                  example: "2025-01-01"
-                ageRating:
-                  type: string
-                  example: "13+"
-                posterUrl:
-                  type: string
-                trailerUrl:
-                  type: string
-      responses:
-        "201":
-          description: Tạo phim thành công
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Movie"
-        "400":
-          description: Thiếu title hoặc durationMinutes
-        "401":
-          description: Chưa đăng nhập
-        "403":
-          description: Không phải admin
+                items:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Movie"
+                pagination:
+                  type: object
+                  properties:
+                    currentPage:
+                      type: integer
+                      example: 1
+                    totalPages:
+                      type: integer
+                      example: 3
+                    totalItems:
+                      type: integer
+                      example: 25
+
+  post:
+    tags:
+      - Movies
+    summary: Tạo phim mới (ADMIN)
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - title
+              - durationMinutes
+            properties:
+              title:
+                type: string
+                example: "Avengers: Endgame"
+              description:
+                type: string
+              durationMinutes:
+                type: integer
+                example: 180
+              releaseDate:
+                type: string
+                format: date
+                example: "2025-01-01"
+              ageRating:
+                type: string
+                example: "13+"
+              posterUrl:
+                type: string
+              trailerUrl:
+                type: string
+    responses:
+      "201":
+        description: Tạo phim thành công
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Movie"
+      "400":
+        description: Thiếu title hoặc durationMinutes
+      "401":
+        description: Chưa đăng nhập
+      "403":
+        description: Không phải admin
+
 
   /movies/{id}:
     get:
@@ -310,3 +368,147 @@ paths:
           description: Không phải admin
         "404":
           description: Không tìm thấy phim
+
+  /movies/{id}/showtimes:
+    get:
+      tags:
+        - Showtimes
+      summary: Lấy lịch chiếu của một phim theo ngày
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID của phim
+        - in: query
+          name: date
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Ngày muốn xem lịch chiếu (YYYY-MM-DD). Nếu bỏ trống sẽ lấy ngày hiện tại.
+      responses:
+        "200":
+          description: Danh sách suất chiếu theo rạp/phòng
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  movieId:
+                    type: integer
+                  date:
+                    type: string
+                    format: date
+                  cinemas:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        cinemaId:
+                          type: integer
+                        cinemaName:
+                          type: string
+                        address:
+                          type: string
+                        rooms:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              roomId:
+                                type: integer
+                              roomName:
+                                type: string
+                              showtimes:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    showtimeId:
+                                      type: integer
+                                    startTime:
+                                      type: string
+                                      format: date-time
+                                    price:
+                                      type: number
+        "404":
+          description: Không tìm thấy phim
+  
+  /showtimes/{id}/seats:
+    get:
+      tags:
+        - Showtimes
+      summary: Lấy danh sách ghế và trạng thái cho một suất chiếu
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID của suất chiếu (showtime)
+      responses:
+        "200":
+          description: Danh sách ghế của suất chiếu
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  showtimeId:
+                    type: integer
+                    example: 5
+                  roomId:
+                    type: integer
+                    example: 3
+                  basePrice:
+                    type: number
+                    example: 80000
+                  seats:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SeatWithStatus"
+        "404":
+          description: Không tìm thấy suất chiếu
+
+  /bookings:
+    post:
+      tags:
+        - Bookings
+      summary: Đặt vé cho một suất chiếu
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - showtimeId
+                - seatIds
+              properties:
+                showtimeId:
+                  type: integer
+                  example: 5
+                seatIds:
+                  type: array
+                  items:
+                    type: integer
+                  example: [15, 16, 17]
+      responses:
+        "201":
+          description: Tạo booking thành công
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          description: Thiếu showtimeId hoặc seatIds
+        "401":
+          description: Chưa đăng nhập
+        "409":
+          description: Một hoặc nhiều ghế đã được đặt trước
+        "500":
+          description: Lỗi server

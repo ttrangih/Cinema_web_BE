@@ -3,7 +3,7 @@ const movieModel = require("../models/movie.model");
 // GET /api/movies
 async function listMovies(req, res) {
   try {
-    const { q } = req.query;
+    const { q } = req.query || " ";
     const page = parseInt(req.query.page) || 1;
     const limit = 10; //limit số phim trong 1 trang
     const offset = (page - 1) * limit; //tính để phân số phim limit trong 1 trang

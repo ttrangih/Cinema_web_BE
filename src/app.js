@@ -29,11 +29,19 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-const authRoutes = require("./routes/auth.route");
+const authRoutes = require("./routes/auth.route");  //login/register
 app.use("/api/auth", authRoutes);
 
-const movieRoutes = require("./routes/movie.route");
+const movieRoutes = require("./routes/movie.route");  //list movie,...
 app.use("/api/movies", movieRoutes);
+
+const showtimeRoutes = require("./routes/showtime.route");
+app.use("/api/showtimes", showtimeRoutes);
+
+const bookingRoutes = require("./routes/booking.route"); //booking
+app.use("/api/bookings", bookingRoutes);
+
+
 
 const swaggerUi = require('swagger-ui-express');
 const fs = require('fs');
