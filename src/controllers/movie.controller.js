@@ -1,40 +1,26 @@
 const movieModel = require("../models/movie.model");
 
+
 // GET /api/movies
 async function listMovies(req, res) {
-  try {
-    const { q } = req.query || " ";
-    const page = parseInt(req.query.page) || 1;
-    const limit = 10; //limit số phim trong 1 trang
-    const offset = (page - 1) * limit; //tính để phân số phim limit trong 1 trang
+  const page = parseInt(req.query.page) || 1;
+  const limit = 10;
+  const offset = (page - 1) * limit;
 
-    const totalItems = await movieModel.getTotalMovies(q); //tổng số phim
-    const totalPages = Math.ceil(totalItems / limit);//tổng số trang
+  const totalItems = await movieModel.getTotalMovies();
+  const totalPages = Math.ceil(totalItems / limit);
 
-    //list movie
-    const items = await movieModel.listMovies({
-      q,
-      limit,
-      offset,
-    });
+  const items = await movieModel.listMovies({ limit, offset });
 
-    return res.json({
-      items,
-      pagination: {
-        currentPage: page,
-        totalPages,
-        totalItems,
-      },
-    });
-
-  } catch (err) {
-    console.error("List movies error:", err);
-    return res.status(500).json({ message: "Server error" });
-  }
+  return res.json({
+    items,
+    pagination: { currentPage: page, totalPages, totalItems },
+  });
 }
 
 
-// GET /api/movies/:id
+
+// GET /api/movies/:id lấy chi tiết phim theo id
 async function getMovie(req, res) {
   try {
     const movie = await movieModel.getMovieById(req.params.id);
@@ -48,7 +34,8 @@ async function getMovie(req, res) {
   }
 }
 
-// POST /api/movies (admin)
+
+// POST /api/movies  (admin)
 async function createMovie(req, res) {
   try {
     const {
@@ -61,6 +48,7 @@ async function createMovie(req, res) {
       trailerUrl,
     } = req.body;
 
+    // validate đơn giản: bắt buộc phải có title và durationMinutes
     if (!title || !durationMinutes) {
       return res
         .status(400)
@@ -84,7 +72,8 @@ async function createMovie(req, res) {
   }
 }
 
-// PUT /api/movies/:id (admin)
+
+// PUT /api/movies/:id  (admin)
 async function updateMovie(req, res) {
   try {
     const movie = await movieModel.updateMovie(req.params.id, req.body);
@@ -98,7 +87,7 @@ async function updateMovie(req, res) {
   }
 }
 
-// DELETE /api/movies/:id (admin)
+// DELETE /api/movies/:id  xoá theo id (admin)
 async function deleteMovie(req, res) {
   try {
     const movie = await movieModel.getMovieById(req.params.id);
@@ -113,10 +102,65 @@ async function deleteMovie(req, res) {
   }
 }
 
+// GET /api/movies/now (dựa vào bảng showtimes: có suất chiếu từ hiện tại trở đi)
+async function listNowShowing(req, res) {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    //model lấy phim đang chiếu
+    const items = await movieModel.getNowShowingMovies({
+      limit,
+      offset,
+    });
+
+    return res.json({
+      items,
+      pagination: {
+        currentPage: page,
+        limit,
+      },
+    });
+  } catch (err) {
+    console.error("List now showing movies error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
+
+// GET /api/movies/soon list phim sắp chiếu (releasedate > ngày hiện tại)
+async function listComingSoon(req, res) {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    // gọi model lấy phim sắp chiếu
+    const items = await movieModel.getComingSoonMovies({
+      limit,
+      offset,
+    });
+
+    return res.json({
+      items,
+      pagination: {
+        currentPage: page,
+        limit,
+      },
+    });
+  } catch (err) {
+    console.error("List coming soon movies error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
 module.exports = {
   listMovies,
   getMovie,
   createMovie,
   updateMovie,
   deleteMovie,
+  listNowShowing,
+  listComingSoon,
 };

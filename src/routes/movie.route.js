@@ -4,6 +4,13 @@ const router = express.Router();
 const movieController = require("../controllers/movie.controller");
 const { requireAuth, requireAdmin } = require("../middlewares/auth.middleware");
 const showtimeController = require("../controllers/showtime.controller");
+
+
+// phim đang chiếu và phim sắp chiếu
+router.get("/now", movieController.listNowShowing);
+router.get("/soon", movieController.listComingSoon);
+
+
 //api/movies
 router.get("/", movieController.listMovies);
 

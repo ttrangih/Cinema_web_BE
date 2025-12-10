@@ -1,5 +1,45 @@
-// src/models/movie.model.js
+
 const { query } = require("../config/db");
+
+const pool = require("../config/db"); 
+
+// ds phim đang chiếu
+async function getNowShowingMovies(page = 1, limit = 10) {
+  const offset = (page - 1) * limit;
+
+  const query = `
+    SELECT DISTINCT m.*
+    FROM movies m
+    JOIN showtimes s ON s.movieid = m.id
+    WHERE s.starttime >= NOW()
+    ORDER BY s.starttime ASC
+    LIMIT $1 OFFSET $2
+  `;
+
+  const result = await pool.query(query, [limit, offset]);
+  return result.rows;
+}
+
+module.exports = {
+  getNowShowingMovies,
+};
+
+// Lấy danh sách phim sắp chiếu
+// Điều kiện: releasedate > CURRENT_DATE
+// =======================================================
+async function getComingSoonMovies({ limit, offset }) {
+  const query = `
+    SELECT *
+    FROM movies
+    WHERE releasedate > CURRENT_DATE
+    ORDER BY releasedate ASC
+    LIMIT $1 OFFSET $2
+  `;
+
+  const result = await pool.query(query, [limit, offset]);
+  return result.rows;
+}
+
 
 // Lấy danh sách phim có phân trang + search
 async function listMovies({ q, limit, offset }) {
@@ -137,3 +177,30 @@ module.exports = {
   deleteMovie,
   getTotalMovies,
 };
+
+// ADMIN ONLY: tìm kiếm phim theo từ khoá
+async function adminSearchMovies({ q, limit, offset }) {
+  const sql = `
+    SELECT *
+    FROM movies
+    WHERE title ILIKE $1
+    ORDER BY id DESC
+    LIMIT $2 OFFSET $3
+  `;
+  const result = await query(sql, [`%${q}%`, limit, offset]);
+  return result.rows;
+}
+
+// ADMIN ONLY: tổng số phim theo từ khoá
+async function getTotalMovies(q = "") {
+  if (q) {
+    const result = await query(
+      `SELECT COUNT(*) FROM movies WHERE title ILIKE $1`,
+      [`%${q}%`]
+    );
+    return parseInt(result.rows[0].count);
+  }
+
+  const result = await query(`SELECT COUNT(*) FROM movies`);
+  return parseInt(result.rows[0].count);
+}

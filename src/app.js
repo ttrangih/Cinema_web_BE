@@ -5,14 +5,23 @@ const { getPool } = require("./config/db");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const adminMovieRoutes = require("./routes/admin.movie.route");
 
 app.use(cors());
 app.use(express.json());
+app.use("/api/admin/movies", adminMovieRoutes);
 
-// test server
-app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", message: "Cinema API is running" });
-});
+
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://cinema-web-be-1.onrender.com",
+    ],
+    credentials: true,
+  })
+);
+
 
 // test database
 app.get("/api/db-test", async (req, res) => {

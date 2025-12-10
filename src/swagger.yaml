@@ -512,3 +512,6 @@ paths:
           description: Một hoặc nhiều ghế đã được đặt trước
         "500":
           description: Lỗi server
+
+  
+  
