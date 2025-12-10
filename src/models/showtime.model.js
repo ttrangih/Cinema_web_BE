@@ -1,4 +1,4 @@
-const pool = require("./config/db");
+const pool = require("../config/db");
 
 /*Public: Lấy danh sách suất chiếu theo movie + date*/
 async function getShowtimesByMovieAndDate(movieId, date) {

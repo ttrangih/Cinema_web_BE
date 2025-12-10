@@ -19,90 +19,73 @@ components:
     User:
       type: object
       properties:
-        id:
-          type: integer
-          example: 1
-        fullName:
-          type: string
-          example: "Nguyen Van A"
-        email:
-          type: string
-          format: email
-          example: "user@example.com"
-        role:
-          type: string
-          example: "USER"
+        id: { type: integer, example: 1 }
+        fullName: { type: string, example: "Nguyen Van A" }
+        email: { type: string, format: email, example: "user@example.com" }
+        role: { type: string, example: "USER" }
+
     SeatWithStatus:
       type: object
       properties:
-        id:
-          type: integer
-          example: 15
-        roomId:
-          type: integer
-          example: 3
-        row:
-          type: string
-          example: "A"
-        number:
-          type: integer
-          example: 7
-        type:
-          type: string
-          example: "NORMAL"
-        isActive:
-          type: boolean
-          example: true
-        isReserved:
-          type: boolean
-          example: false
-        price:
-          type: number
-          example: 80000
+        id: { type: integer, example: 15 }
+        roomId: { type: integer, example: 3 }
+        row: { type: string, example: "A" }
+        number: { type: integer, example: 7 }
+        type: { type: string, example: "NORMAL" }
+        isActive: { type: boolean, example: true }
+        isReserved: { type: boolean, example: false }
+        price: { type: number, example: 80000 }
 
     Booking:
       type: object
       properties:
-        bookingId:
-          type: integer
-          example: 12
-        showtimeId:
-          type: integer
-          example: 5
+        bookingId: { type: integer, example: 12 }
+        showtimeId: { type: integer, example: 5 }
         seatIds:
           type: array
-          items:
-            type: integer
+          items: { type: integer }
           example: [15, 16, 17]
 
     Movie:
       type: object
       properties:
-        id:
-          type: integer
-          example: 1
-        title:
-          type: string
-          example: "Avengers: Endgame"
-        description:
-          type: string
-        durationMinutes:
-          type: integer
-          example: 180
-        releaseDate:
-          type: string
-          format: date
-          example: "2025-01-01"
-        ageRating:
-          type: string
-          example: "13+"
-        posterUrl:
-          type: string
-          example: "https://example.com/poster.jpg"
-        trailerUrl:
-          type: string
-          example: "https://youtube.com/..."
+        id: { type: integer, example: 1 }
+        title: { type: string, example: "Avengers: Endgame" }
+        description: { type: string }
+        durationMinutes: { type: integer, example: 180 }
+        releaseDate: { type: string, format: date, example: "2025-01-01" }
+        ageRating: { type: string, example: "13+" }
+        posterUrl: { type: string, example: "https://example.com/poster.jpg" }
+        trailerUrl: { type: string, example: "https://youtube.com/..." }
 
+    MovieCreate:
+      type: object
+      required: [title, durationMinutes]
+      properties:
+        title: { type: string, example: "Avengers: Endgame" }
+        description: { type: string }
+        durationMinutes: { type: integer, example: 180 }
+        releaseDate: { type: string, format: date, example: "2025-01-01" }
+        ageRating: { type: string, example: "13+" }
+        posterUrl: { type: string, example: "https://example.com/poster.jpg" }
+        trailerUrl: { type: string, example: "https://youtube.com/..." }
+
+    MovieUpdate:
+      allOf:
+        - $ref: "#/components/schemas/MovieCreate"
+
+    ShowtimeCreate:
+      type: object
+      required: [movieId, roomId, startTime]
+      properties:
+        movieId: { type: integer, example: 3 }
+        roomId: { type: integer, example: 1 }
+        startTime: { type: string, format: date-time, example: "2025-12-10T19:30:00.000Z" }
+        price: { type: integer, example: 90000 }
+
+    ShowtimeUpdate:
+      allOf:
+        - $ref: "#/components/schemas/ShowtimeCreate"
 paths:
   /auth/register:
     post:
@@ -208,95 +191,45 @@ paths:
           description: Thiếu hoặc token không hợp lệ
 
   /movies:
-  get:
-    tags:
-      - Movies
-    summary: Lấy danh sách phim (có tìm kiếm)
-    parameters:
-      - in: query
-        name: q
-        schema:
-          type: string
-        description: Từ khóa tìm kiếm theo tên phim
-      - in: query
-        name: page
-        schema:
-          type: integer
-          default: 1
-    responses:
-      "200":
-        description: Danh sách phim kèm phân trang
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                items:
-                  type: array
-                  items:
-                    $ref: "#/components/schemas/Movie"
-                pagination:
-                  type: object
-                  properties:
-                    currentPage:
-                      type: integer
-                      example: 1
-                    totalPages:
-                      type: integer
-                      example: 3
-                    totalItems:
-                      type: integer
-                      example: 25
-
-  post:
-    tags:
-      - Movies
-    summary: Tạo phim mới (ADMIN)
-    security:
-      - bearerAuth: []
-    requestBody:
-      required: true
-      content:
-        application/json:
+    get:
+      tags:
+        - Movies
+      summary: Lấy danh sách phim (có tìm kiếm)
+      parameters:
+        - in: query
+          name: q
           schema:
-            type: object
-            required:
-              - title
-              - durationMinutes
-            properties:
-              title:
-                type: string
-                example: "Avengers: Endgame"
-              description:
-                type: string
-              durationMinutes:
-                type: integer
-                example: 180
-              releaseDate:
-                type: string
-                format: date
-                example: "2025-01-01"
-              ageRating:
-                type: string
-                example: "13+"
-              posterUrl:
-                type: string
-              trailerUrl:
-                type: string
-    responses:
-      "201":
-        description: Tạo phim thành công
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Movie"
-      "400":
-        description: Thiếu title hoặc durationMinutes
-      "401":
-        description: Chưa đăng nhập
-      "403":
-        description: Không phải admin
-
+            type: string
+          description: Từ khóa tìm kiếm theo tên phim
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+      responses:
+        "200":
+          description: Danh sách phim kèm phân trang
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Movie"
+                  pagination:
+                    type: object
+                    properties:
+                      currentPage:
+                        type: integer
+                        example: 1
+                      totalPages:
+                        type: integer
+                        example: 3
+                      totalItems:
+                        type: integer
+                        example: 25
 
   /movies/{id}:
     get:
@@ -316,56 +249,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Movie"
-        "404":
-          description: Không tìm thấy phim
-
-    put:
-      tags:
-        - Movies
-      summary: Cập nhật phim (ADMIN)
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Movie"
-      responses:
-        "200":
-          description: Cập nhật thành công
-        "401":
-          description: Chưa đăng nhập
-        "403":
-          description: Không phải admin
-        "404":
-          description: Không tìm thấy phim
-
-    delete:
-      tags:
-        - Movies
-      summary: Xoá phim (ADMIN)
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: Xoá thành công
-        "401":
-          description: Chưa đăng nhập
-        "403":
-          description: Không phải admin
         "404":
           description: Không tìm thấy phim
 
@@ -435,7 +318,7 @@ paths:
                                       type: number
         "404":
           description: Không tìm thấy phim
-  
+
   /showtimes/{id}/seats:
     get:
       tags:
@@ -513,5 +396,196 @@ paths:
         "500":
           description: Lỗi server
 
-  
-  
+  /admin/movies:
+    get:
+      tags:
+        - Admin Movies
+      summary: Lấy danh sách phim (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Success
+
+    post:
+      tags:
+        - Admin Movies
+      summary: Tạo phim mới (ADMIN)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MovieCreate"
+      responses:
+        "201":
+          description: Movie created
+        "400":
+          description: Thiếu title hoặc durationMinutes
+        "401":
+          description: Chưa đăng nhập
+        "403":
+          description: Không phải admin
+
+  /admin/movies/{id}:
+    put:
+      tags:
+        - Admin Movies
+      summary: Cập nhật phim (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MovieUpdate"
+      responses:
+        "200":
+          description: Movie updated
+        "401":
+          description: Chưa đăng nhập
+        "403":
+          description: Không phải admin
+        "404":
+          description: Không tìm thấy phim
+
+    delete:
+      tags:
+        - Admin Movies
+      summary: Xoá phim (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Movie deleted
+        "401":
+          description: Chưa đăng nhập
+        "403":
+          description: Không phải admin
+        "404":
+          description: Không tìm thấy phim
+
+  /admin/showtimes:
+    get:
+      tags:
+        - Admin Showtimes
+      summary: Lấy danh sách suất chiếu (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: movieId
+          schema:
+            type: integer
+        - in: query
+          name: cinemaId
+          schema:
+            type: integer
+        - in: query
+          name: date
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Success
+
+    post:
+      tags:
+        - Admin Showtimes
+      summary: Tạo suất chiếu (ADMIN)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShowtimeCreate"
+      responses:
+        "201":
+          description: Showtime created
+        "400":
+          description: Thiếu movieId, roomId hoặc startTime
+        "401":
+          description: Chưa đăng nhập
+        "403":
+          description: Không phải admin
+
+  /admin/showtimes/{id}:
+    put:
+      tags:
+        - Admin Showtimes
+      summary: Cập nhật suất chiếu (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShowtimeUpdate"
+      responses:
+        "200":
+          description: Showtime updated
+        "401":
+          description: Chưa đăng nhập
+        "403":
+          description: Không phải admin
+        "404":
+          description: Không tìm thấy suất chiếu
+
+    delete:
+      tags:
+        - Admin Showtimes
+      summary: Xoá suất chiếu (ADMIN)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Showtime deleted
+        "401":
+          description: Chưa đăng nhập
+        "403":
+          description: Không phải admin
+        "404":
+          description: Không tìm thấy suất chiếu
