@@ -10,6 +10,7 @@ async function getShowtimesByMovieAndDate(movieId, date) {
       s.id        AS "showtimeId",
       s.starttime AS "startTime",
       s.price     AS "price",
+      s.endtime   AS "endTime",
       c.id        AS "cinemaId",
       c.name      AS "cinemaName",
       c.address   AS "cinemaAddress",
@@ -20,7 +21,7 @@ async function getShowtimesByMovieAndDate(movieId, date) {
     JOIN cinemas c ON r.cinemaid = c.id
     WHERE s.movieid = $1
       AND s.starttime >= $2::date
-      AND s.starttime < ($2::date + INTERVAL '7 days')
+      AND s.starttime < ($2::date + INTERVAL '1 day')
     ORDER BY c.id, r.id, s.starttime;
   `;
 
