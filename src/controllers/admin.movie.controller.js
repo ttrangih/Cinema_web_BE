@@ -38,6 +38,27 @@ async function listMovies(req, res) {
 }
 
 /**
+ * GET /api/admin/movies/:id
+ * Admin lấy chi tiết 1 phim
+ */
+async function getMovieById(req, res) {
+  try {
+    const movieId = req.params.id;
+    const movie = await movieModel.getMovieById(movieId);
+
+    if (!movie) {
+      return res.status(404).json({ message: "Movie not found" });
+    }
+
+    return res.json(movie);
+  } catch (err) {
+    console.error("Admin get movie error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
+
+/**
  * POST /api/admin/movies
  * Admin thêm phim mới
  */
@@ -128,4 +149,5 @@ module.exports = {
   createMovie,
   updateMovie,
   deleteMovie,
+  getMovieById,
 };

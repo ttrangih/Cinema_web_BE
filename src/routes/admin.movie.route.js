@@ -14,4 +14,8 @@ router.put("/:id", requireAuth, requireAdmin, adminMovieController.updateMovie);
 // DELETE
 router.delete("/:id", requireAuth, requireAdmin, adminMovieController.deleteMovie);
 
+// GET /api/admin/movies/:id
+router.get("/:id", requireAuth, requireAdmin, adminMovieController.getMovieById);
+
+
 module.exports = router;
