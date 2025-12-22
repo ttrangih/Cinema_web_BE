@@ -21,7 +21,7 @@ app.use(
 app.use(express.json());
 
 
-//ROUTES (SAU middleware)
+//ROUTES 
 const authRoutes = require("./routes/auth.route");
 const movieRoutes = require("./routes/movie.route");
 const showtimeRoutes = require("./routes/showtime.route");

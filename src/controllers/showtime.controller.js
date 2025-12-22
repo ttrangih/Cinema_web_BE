@@ -1,6 +1,16 @@
-// src/controllers/showtime.controller.js
 const { getShowtimesByMovieAndDate } = require("../models/showtime.model");
 const movieModel = require("../models/movie.model");
+
+const dateKeyVN = (input = new Date()) => {
+  const d = input instanceof Date ? input : new Date(input);
+
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d); // YYYY-MM-DD
+};
 
 /**
  * GET /api/movies/:id/showtimes?date=YYYY-MM-DD
@@ -10,8 +20,8 @@ async function getShowtimesForMovie(req, res) {
     const movieId = Number(req.params.id);
     const { date } = req.query;
 
-    const rows = await getShowtimesByMovieAndDate(movieId, date);
-    const targetDate = date || new Date().toISOString().slice(0, 10);
+    const targetDate = date || dateKeyVN();
+    const rows = await getShowtimesByMovieAndDate(movieId, targetDate);
 
     if (!rows.length) {
       return res.json({

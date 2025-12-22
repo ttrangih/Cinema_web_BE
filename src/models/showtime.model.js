@@ -1,16 +1,13 @@
 const pool = require("../config/db");
 
 /*Public: Lấy danh sách suất chiếu theo movie + date*/
-async function getShowtimesByMovieAndDate(movieId, date) {
-  // nếu FE không gửi date thì lấy ngày hôm nay
-  const targetDate = date || new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
-
+async function getShowtimesByMovieAndDate(movieId, targetDate) {
   const query = `
     SELECT
       s.id        AS "showtimeId",
-      s.starttime AS "startTime",
+      (s.starttime AT TIME ZONE 'Asia/Ho_Chi_Minh') AS "startTime",
+      (s.endtime AT TIME ZONE 'Asia/Ho_Chi_Minh') AS "endTime",
       s.price     AS "price",
-      s.endtime   AS "endTime",
       c.id        AS "cinemaId",
       c.name      AS "cinemaName",
       c.address   AS "cinemaAddress",
@@ -20,8 +17,7 @@ async function getShowtimesByMovieAndDate(movieId, date) {
     JOIN rooms   r ON s.roomid   = r.id
     JOIN cinemas c ON r.cinemaid = c.id
     WHERE s.movieid = $1
-      AND s.starttime >= $2::date
-      AND s.starttime < ($2::date + INTERVAL '1 day')
+    AND DATE(s.starttime AT TIME ZONE 'Asia/Ho_Chi_Minh') = $2::date
     ORDER BY c.id, r.id, s.starttime;
   `;
 
