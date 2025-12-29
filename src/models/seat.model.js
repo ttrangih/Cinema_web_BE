@@ -31,17 +31,36 @@ async function getSeatsByShowtime(showtimeId) {
     [roomId]
   );
 
+  await pool.query(`
+  UPDATE bookings
+  SET status = 'EXPIRED'
+  WHERE status = 'BOOKED'
+    AND expires_at < NOW()
+`);
+
+await pool.query(`
+  DELETE FROM bookingdetails bd
+  USING bookings b
+  WHERE bd.bookingid = b.id
+    AND b.status = 'EXPIRED'
+`);
+
+
   //Lấy các ghế đã được đặt cho suất chiếu 
   const reservedRes = await pool.query(
-    `
-    SELECT bd.seatid
-    FROM bookingdetails bd
-    JOIN bookings b ON bd.bookingid = b.id
-    WHERE b.showtimeid = $1
-      AND b.status IN ('BOOKED', 'PAID')
-    `,
-    [showtimeId]
-  );
+  `
+  SELECT bd.seatid
+  FROM bookingdetails bd
+  JOIN bookings b ON bd.bookingid = b.id
+  WHERE b.showtimeid = $1
+    AND (
+      b.status = 'PAID'
+      OR (b.status = 'BOOKED' AND b.expires_at >= NOW())
+    )
+  `,
+  [showtimeId]
+);
+
 
   const reservedSet = new Set(reservedRes.rows.map((r) => r.seatid));
 

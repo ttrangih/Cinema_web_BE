@@ -25,6 +25,7 @@ async function createBookingController(req, res) {
       bookingId: result.bookingId,
       showtimeId: result.showtimeId,
       seatIds: result.seatIds,
+      expiresAt: result.expiresAt,
     });
   } catch (err) {
     console.error("Create booking error:", err);

@@ -5,6 +5,8 @@ async function createBooking(userId, showtimeId, seatIds) {
 
   try {
     await client.query("BEGIN");
+    await cleanupExpiredBookings(client);
+
 
     //Lấy thông tin suất chiếu
     const showtimeRes = await client.query(
@@ -16,6 +18,24 @@ async function createBooking(userId, showtimeId, seatIds) {
     }
     const roomId = showtimeRes.rows[0].roomid;
     const basePrice = showtimeRes.rows[0].price;
+
+    //cleanup
+    async function cleanupExpiredBookings(client) {
+  await client.query(`
+    UPDATE bookings
+    SET status = 'EXPIRED'
+    WHERE status = 'BOOKED'
+      AND expires_at < NOW()
+  `);
+
+  await client.query(`
+    DELETE FROM bookingdetails bd
+    USING bookings b
+    WHERE bd.bookingid = b.id
+      AND b.status = 'EXPIRED'
+  `);
+}
+
 
     //Kiểm tra ghế có thuộc phòng này không
     const seatCheckRes = await client.query(
@@ -33,17 +53,21 @@ async function createBooking(userId, showtimeId, seatIds) {
     }
 
     //Kiểm tra ghế đã bị đặt chưa
-    const takenRes = await client.query(
-      `
-      SELECT bd.seatid
-      FROM bookingdetails bd
-      JOIN bookings b ON bd.bookingid = b.id
-      WHERE b.showtimeid = $1
-        AND b.status IN ('BOOKED', 'PAID')
-        AND bd.seatid = ANY($2::int[])
-      `,
-      [showtimeId, seatIds]
-    );
+  const takenRes = await client.query(
+  `
+  SELECT bd.seatid
+  FROM bookingdetails bd
+  JOIN bookings b ON bd.bookingid = b.id
+  WHERE b.showtimeid = $1
+    AND (
+      b.status = 'PAID'
+      OR (b.status = 'BOOKED' AND b.expires_at >= NOW())
+    )
+    AND bd.seatid = ANY($2::int[])
+  `,
+  [showtimeId, seatIds]
+);
+
 
     if (takenRes.rows.length > 0) {
       await client.query("ROLLBACK");
@@ -56,15 +80,17 @@ async function createBooking(userId, showtimeId, seatIds) {
 
     //Tạo booking
     const bookingRes = await client.query(
-      `
-      INSERT INTO bookings (userid, showtimeid, bookingtime, status)
-      VALUES ($1, $2, NOW(), 'BOOKED')
-      RETURNING id
-      `,
-      [userId, showtimeId]
-    );
+  `
+  INSERT INTO bookings (userid, showtimeid, bookingtime, status, expires_at)
+  VALUES ($1, $2, NOW(), 'BOOKED', NOW() + interval '10 minutes')
+  RETURNING id, expires_at
+  `,
+  [userId, showtimeId]
+);
 
-    const bookingId = bookingRes.rows[0].id;
+const bookingId = bookingRes.rows[0].id;
+const expiresAt = bookingRes.rows[0].expires_at;
+
 
     //Tạo bookingdetails cho từng ghế
     for (const seatId of seatIds) {
@@ -80,11 +106,13 @@ async function createBooking(userId, showtimeId, seatIds) {
     await client.query("COMMIT");
 
     return {
-      success: true,
-      bookingId,
-      showtimeId,
-      seatIds,
-    };
+  success: true,
+  bookingId,
+  showtimeId,
+  seatIds,
+  expiresAt,
+};
+
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;

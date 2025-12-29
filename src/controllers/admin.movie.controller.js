@@ -121,10 +121,7 @@ async function updateMovie(req, res) {
   }
 }
 
-/**
- * DELETE /api/admin/movies/:id
- * Admin xoá phim
- */
+/* Admin xoá phim */
 async function deleteMovie(req, res) {
   try {
     const movieId = req.params.id;
